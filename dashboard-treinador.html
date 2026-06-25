@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HandQuiriguaçu — Dashboard do Treinador</title>
+
+  <!-- Supabase: banco de dados sem backend -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Tailwind: estilização sem escrever CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Inter: tipografia moderna e legível -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+
+  <!-- ══════════════════════════════════════════════
+       BARRA DE NAVEGAÇÃO SUPERIOR
+  ══════════════════════════════════════════════ -->
+  <nav class="bg-white border-b border-gray-200 px-6 py-4">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <!-- Logo -->
+      <a href="dashboard-treinador.html" class="flex items-center gap-2">
+        <svg class="w-7 h-7" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="18" stroke="#1d4ed8" stroke-width="2.5"/>
+          <path d="M20 4 C20 4 10 12 10 20 C10 28 20 36 20 36" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+          <path d="M20 4 C20 4 30 12 30 20 C30 28 20 36 20 36" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+          <path d="M4 18 Q20 22 36 18" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="font-bold text-blue-700">HandQuiriguaçu</span>
+      </a>
+
+      <!-- Nome do treinador + botão de logout -->
+      <div class="flex items-center gap-4">
+        <span id="nomeTreinadorNav" class="text-sm font-medium text-gray-700 hidden sm:block"></span>
+        <button
+          onclick="fazerLogout()"
+          class="border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium py-1.5 px-4 rounded-lg text-sm transition-colors"
+        >
+          Sair
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════
+       CONTEÚDO PRINCIPAL
+  ══════════════════════════════════════════════ -->
+  <main class="max-w-5xl mx-auto px-6 py-8 space-y-6">
+
+    <!-- Estado de carregamento -->
+    <div id="estadoCarregando" class="text-center py-16">
+      <div class="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-700 rounded-full animate-spin mb-4"></div>
+      <p class="text-gray-500 text-sm">Carregando seu dashboard...</p>
+    </div>
+
+    <!-- Conteúdo do dashboard (oculto até os dados carregarem) -->
+    <div id="conteudoDashboard" class="hidden space-y-6">
+
+      <!-- ── CARD DE BOAS-VINDAS ── -->
+      <div class="bg-blue-700 rounded-xl p-6 text-white">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+
+          <!-- Lado esquerdo: nome e clube -->
+          <div>
+            <p class="text-blue-200 text-sm font-medium mb-1">Bem-vindo de volta,</p>
+            <h1 id="nomeTreinador" class="text-2xl font-bold"></h1>
+            <p id="clubeTreinador" class="text-blue-200 text-sm mt-1"></p>
+          </div>
+
+          <!-- Lado direito: atalho para editar perfil -->
+          <a
+            href="treinador-editar.html"
+            class="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 px-3 rounded-lg text-xs transition-colors shrink-0 self-start sm:self-auto"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            Editar perfil
+          </a>
+
+        </div>
+      </div>
+
+      <!-- ── CONTADOR POR POSIÇÃO ── -->
+      <!-- Mostra quantos atletas disponíveis existem em cada posição.
+           Os dados vêm da mesma consulta que carrega a lista de atletas,
+           sem nenhuma chamada extra ao banco. -->
+      <div>
+        <h2 class="text-base font-bold text-gray-900 mb-3">Atletas disponíveis por posição</h2>
+        <div id="gradeContadores" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+          <!-- Os cards de contagem são inseridos via JavaScript -->
+        </div>
+      </div>
+
+      <!-- ── ÚLTIMOS ATLETAS CADASTRADOS ── -->
+      <!-- Exibe os 6 atletas mais recentemente cadastrados na plataforma,
+           independentemente de disponibilidade, para dar visibilidade a novos membros. -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-base font-bold text-gray-900">Últimos atletas cadastrados</h2>
+          <!-- Link para ver todos os atletas disponíveis -->
+          <a href="treinador.html" class="text-sm text-blue-700 font-medium hover:underline">
+            Ver todos disponíveis →
+          </a>
+        </div>
+
+        <!-- Estado de carregamento da lista -->
+        <div id="estadoCarregandoAtletas" class="text-center py-8">
+          <div class="inline-block w-6 h-6 border-4 border-blue-200 border-t-blue-700 rounded-full animate-spin"></div>
+        </div>
+
+        <!-- Grade de cards dos últimos atletas -->
+        <div id="gradeUltimosAtletas" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+        <!-- Estado vazio -->
+        <div id="estadoVazioAtletas" class="hidden text-center py-10 bg-white rounded-xl border border-gray-100">
+          <p class="text-gray-400 text-sm">Nenhum atleta cadastrado ainda.</p>
+        </div>
+      </div>
+
+      <!-- ── LISTA COMPLETA DE ATLETAS DISPONÍVEIS ── -->
+      <div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <h2 class="text-base font-bold text-gray-900">Atletas disponíveis para recrutamento</h2>
+
+          <!-- Filtro por posição -->
+          <div class="flex items-center gap-2">
+            <label for="filtroPosicao" class="text-sm font-medium text-gray-600 whitespace-nowrap">Filtrar:</label>
+            <select
+              id="filtroPosicao"
+              onchange="filtrarPorPosicao()"
+              class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Todas as posições</option>
+              <option value="Goleiro">Goleiro</option>
+              <option value="Ponta Esquerda">Ponta Esquerda</option>
+              <option value="Ponta Direita">Ponta Direita</option>
+              <option value="Meia Esquerda">Meia Esquerda</option>
+              <option value="Meia Direita">Meia Direita</option>
+              <option value="Central">Central</option>
+              <option value="Pivô">Pivô</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Estado de carregamento da lista de disponíveis -->
+        <div id="estadoCarregandoDisponiveis" class="text-center py-8">
+          <div class="inline-block w-6 h-6 border-4 border-blue-200 border-t-blue-700 rounded-full animate-spin"></div>
+        </div>
+
+        <!-- Grade de atletas disponíveis -->
+        <div id="gradeAtletasDisponiveis" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+        <!-- Estado vazio -->
+        <div id="estadoVazioDisponiveis" class="hidden text-center py-10 bg-white rounded-xl border border-gray-100">
+          <svg class="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <p class="text-gray-400 text-sm" id="textoVazioDisponiveis">Nenhum atleta disponível no momento.</p>
+        </div>
+
+        <!-- Contador de resultados -->
+        <p id="contadorResultados" class="hidden text-xs text-gray-400 mt-3 text-right"></p>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════════
+       JAVASCRIPT — lógica do dashboard do treinador
+  ══════════════════════════════════════════════ -->
+  <script>
+    // ── 1. CONFIGURAÇÃO DO SUPABASE ──────────────────────────────
+    const SUPABASE_URL   = 'https://ckznrungfbkbjfcajixm.supabase.co';
+    const SUPABASE_CHAVE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrem5ydW5nZmJrYmpmY2FqaXhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MTY5MTEsImV4cCI6MjA5Nzk5MjkxMX0.1Wl-lKTn_0ZOyL1stOoyGRriP4_f45nm09FIf0bsBzc';
+
+    const clienteSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_CHAVE);
+
+    // Guarda todos os atletas disponíveis para filtrar sem nova consulta ao banco
+    let atletasDisponiveisCacheados = [];
+
+    // ── 2. FUNÇÕES AUXILIARES ────────────────────────────────────
+
+    /**
+     * calcularIdade
+     * Calcula a idade em anos a partir de uma data de nascimento.
+     * @param dataNasc - string no formato 'YYYY-MM-DD'
+     * @returns número inteiro ou null
+     */
+    function calcularIdade(dataNasc) {
+      if (!dataNasc) return null;
+      const hoje       = new Date();
+      const nascimento = new Date(dataNasc);
+      let idade        = hoje.getFullYear() - nascimento.getFullYear();
+      const mes        = hoje.getMonth();
+      const mesNasc    = nascimento.getMonth();
+      if (mes < mesNasc || (mes === mesNasc && hoje.getDate() < nascimento.getDate())) {
+        idade--;
+      }
+      return idade;
+    }
+
+    /**
+     * renderizarCardAtleta
+     * Gera o HTML de um card de atleta para exibir nas grades.
+     * @param atleta - objeto com dados do atleta (profiles + atletas)
+     * @param mostrarBadge - se true, mostra badge verde de "Disponível"
+     * @returns string HTML do card
+     */
+    function renderizarCardAtleta(atleta, mostrarBadge) {
+      const nome     = atleta.profiles?.nome      || 'Atleta';
+      const fotoUrl  = atleta.profiles?.avatar_url || null;
+      const posicao  = atleta.posicao             || 'Posição não informada';
+      const inicial  = nome[0].toUpperCase();
+      const idade    = calcularIdade(atleta.data_nasc);
+      const idadeStr = idade !== null ? `${idade} anos` : '';
+
+      // Avatar: foto real ou inicial do nome
+      const avatarHtml = fotoUrl
+        ? `<img src="${fotoUrl}" alt="Foto de ${nome}" class="w-full h-full object-cover rounded-full" />`
+        : inicial;
+
+      // Badge de disponível (opcional)
+      const badgeHtml = mostrarBadge
+        ? `<span class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded-full">Disponível</span>`
+        : '';
+
+      return `
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col hover:shadow-md transition-shadow">
+          <div class="flex items-start justify-between mb-3">
+            <!-- Avatar -->
+            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg shrink-0 overflow-hidden">
+              ${avatarHtml}
+            </div>
+            ${badgeHtml}
+          </div>
+
+          <!-- Nome e posição -->
+          <div class="flex-1 mb-3">
+            <p class="font-semibold text-gray-900 text-sm">${nome}</p>
+            <p class="text-xs text-gray-500 mt-0.5">${posicao}</p>
+            ${idadeStr ? `<p class="text-xs text-gray-400 mt-1">${idadeStr}</p>` : ''}
+          </div>
+
+          <!-- Dados físicos (se houver) -->
+          ${(atleta.altura_cm || atleta.peso_kg) ? `
+            <p class="text-xs text-gray-400 mb-3">
+              ${atleta.altura_cm ? atleta.altura_cm + ' cm' : ''}
+              ${atleta.altura_cm && atleta.peso_kg ? ' · ' : ''}
+              ${atleta.peso_kg ? atleta.peso_kg + ' kg' : ''}
+            </p>
+          ` : ''}
+
+          <!-- Botão ver perfil -->
+          <a
+            href="atleta.html?id=${atleta.id}"
+            class="w-full text-center bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg text-xs transition-colors"
+          >
+            Ver perfil
+          </a>
+        </div>
+      `;
+    }
+
+    /**
+     * renderizarContadoresPorPosicao
+     * Agrupa os atletas disponíveis por posição e exibe um card
+     * de contagem para cada posição. Não faz nova chamada ao banco —
+     * usa a lista já carregada em atletasDisponiveisCacheados.
+     * @param atletas - array de atletas disponíveis
+     */
+    function renderizarContadoresPorPosicao(atletas) {
+      // Define as posições na ordem do jogo
+      const posicoes = ['Goleiro', 'Ponta Esquerda', 'Ponta Direita', 'Meia Esquerda', 'Meia Direita', 'Central', 'Pivô'];
+
+      const htmlContadores = posicoes.map(function (posicao) {
+        // Conta quantos atletas têm esta posição
+        const quantidade = atletas.filter(function (a) {
+          return a.posicao === posicao;
+        }).length;
+
+        // Destaca posições com atletas disponíveis (azul) vs sem (cinza)
+        const corNumero = quantidade > 0 ? 'text-blue-700' : 'text-gray-300';
+        const corCard   = quantidade > 0 ? 'border-blue-100' : 'border-gray-100';
+
+        // Nome abreviado para caber nos cards menores
+        const nomeAbrev = posicao.replace('Esquerda', 'Esq.').replace('Direita', 'Dir.');
+
+        return `
+          <div class="bg-white rounded-xl shadow-sm border ${corCard} p-3 text-center">
+            <p class="text-2xl font-bold ${corNumero}">${quantidade}</p>
+            <p class="text-xs text-gray-500 mt-1 leading-tight">${nomeAbrev}</p>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('gradeContadores').innerHTML = htmlContadores;
+    }
+
+    // ── 3. FUNÇÕES PRINCIPAIS ────────────────────────────────────
+
+    /**
+     * verificarAutenticacao
+     * Verifica se há um usuário logado. Redireciona se não houver.
+     * @returns o objeto do usuário logado ou null
+     */
+    async function verificarAutenticacao() {
+      const { data: { session } } = await clienteSupabase.auth.getSession();
+      if (!session) {
+        window.location.href = 'index.html';
+        return null;
+      }
+      return session.user;
+    }
+
+    /**
+     * carregarDashboard
+     * Carrega todos os dados necessários para o dashboard do treinador:
+     * perfil do treinador, últimos atletas e atletas disponíveis.
+     * @param idTreinador - UUID do treinador logado
+     */
+    async function carregarDashboard(idTreinador) {
+      try {
+        // 1. Busca o perfil do treinador e os atletas em paralelo
+        //    Três consultas simultâneas: profile, treinador, atletas
+        const [resultadoPerfil, resultadoTreinador, resultadoAtletas] = await Promise.all([
+
+          // Perfil básico do treinador
+          clienteSupabase.from('profiles')
+            .select('nome')
+            .eq('id', idTreinador)
+            .single(),
+
+          // Dados profissionais do treinador
+          clienteSupabase.from('treinadores')
+            .select('clube, cidade')
+            .eq('id', idTreinador)
+            .single(),
+
+          // Todos os atletas (para últimos cadastrados E disponíveis)
+          // Uma única consulta serve para ambas as seções
+          clienteSupabase.from('atletas')
+            .select(`
+              id,
+              posicao,
+              altura_cm,
+              peso_kg,
+              data_nasc,
+              disponivel,
+              criado_em,
+              profiles ( nome, avatar_url )
+            `)
+            .order('criado_em', { ascending: false }),
+        ]);
+
+        // 2. Preenche o card de boas-vindas com nome e clube do treinador
+        if (resultadoPerfil.data) {
+          const nome = resultadoPerfil.data.nome || 'Treinador';
+          document.getElementById('nomeTreinador').textContent    = nome;
+          document.getElementById('nomeTreinadorNav').textContent = nome;
+        }
+
+        if (resultadoTreinador.data) {
+          const { clube, cidade } = resultadoTreinador.data;
+          let descricao = '';
+          if (clube)  descricao += clube;
+          if (cidade) descricao += (clube ? ' · ' : '') + cidade;
+          document.getElementById('clubeTreinador').textContent = descricao || 'Clube não informado';
+        }
+
+        // 3. Processa a lista de atletas (usada em duas seções)
+        const todosAtletas = resultadoAtletas.data || [];
+
+        // Filtra apenas os disponíveis e guarda no cache para o filtro por posição
+        atletasDisponiveisCacheados = todosAtletas.filter(function (a) {
+          return a.disponivel === true;
+        });
+
+        // 4. Renderiza os contadores por posição (usa os disponíveis)
+        renderizarContadoresPorPosicao(atletasDisponiveisCacheados);
+
+        // 5. Renderiza os últimos 6 atletas cadastrados (independente de disponibilidade)
+        const ultimosAtletas = todosAtletas.slice(0, 6);
+        renderizarSecaoUltimosAtletas(ultimosAtletas);
+
+        // 6. Renderiza a lista de atletas disponíveis
+        renderizarAtletasDisponiveis(atletasDisponiveisCacheados);
+
+        // Exibe o conteúdo e esconde o spinner principal
+        document.getElementById('estadoCarregando').classList.add('hidden');
+        document.getElementById('conteudoDashboard').classList.remove('hidden');
+
+      } catch (erro) {
+        console.error('Erro ao carregar dashboard:', erro);
+      }
+    }
+
+    /**
+     * renderizarSecaoUltimosAtletas
+     * Exibe os últimos atletas cadastrados na plataforma.
+     * @param atletas - array com os atletas mais recentes
+     */
+    function renderizarSecaoUltimosAtletas(atletas) {
+      document.getElementById('estadoCarregandoAtletas').classList.add('hidden');
+
+      if (!atletas || atletas.length === 0) {
+        document.getElementById('estadoVazioAtletas').classList.remove('hidden');
+        return;
+      }
+
+      // Renderiza os cards sem o badge de "Disponível" (pois mistura todos os atletas)
+      const grade = document.getElementById('gradeUltimosAtletas');
+      grade.innerHTML = atletas.map(function (a) {
+        return renderizarCardAtleta(a, false);
+      }).join('');
+      grade.classList.remove('hidden');
+    }
+
+    /**
+     * renderizarAtletasDisponiveis
+     * Exibe a lista de atletas com disponivel = true.
+     * Usado tanto no carregamento inicial quanto no filtro por posição.
+     * @param atletas - array de atletas a exibir
+     */
+    function renderizarAtletasDisponiveis(atletas) {
+      document.getElementById('estadoCarregandoDisponiveis').classList.add('hidden');
+      document.getElementById('gradeAtletasDisponiveis').classList.add('hidden');
+      document.getElementById('estadoVazioDisponiveis').classList.add('hidden');
+      document.getElementById('contadorResultados').classList.add('hidden');
+
+      if (!atletas || atletas.length === 0) {
+        document.getElementById('estadoVazioDisponiveis').classList.remove('hidden');
+        return;
+      }
+
+      // Renderiza os cards com o badge verde de "Disponível"
+      const grade = document.getElementById('gradeAtletasDisponiveis');
+      grade.innerHTML = atletas.map(function (a) {
+        return renderizarCardAtleta(a, true);
+      }).join('');
+      grade.classList.remove('hidden');
+
+      // Exibe o contador de resultados
+      const contador = document.getElementById('contadorResultados');
+      contador.textContent = `${atletas.length} atleta(s) disponível(is)`;
+      contador.classList.remove('hidden');
+    }
+
+    /**
+     * filtrarPorPosicao
+     * Filtra a lista de disponíveis pelo select de posição.
+     * Usa o cache local — sem nova consulta ao banco.
+     */
+    function filtrarPorPosicao() {
+      const posicaoSelecionada = document.getElementById('filtroPosicao').value;
+
+      // Filtra o cache local em vez de buscar no banco novamente
+      const atletasFiltrados = posicaoSelecionada
+        ? atletasDisponiveisCacheados.filter(function (a) {
+            return a.posicao === posicaoSelecionada;
+          })
+        : atletasDisponiveisCacheados;
+
+      // Atualiza o texto do estado vazio dependendo do filtro
+      document.getElementById('textoVazioDisponiveis').textContent = posicaoSelecionada
+        ? `Nenhum atleta disponível para a posição "${posicaoSelecionada}".`
+        : 'Nenhum atleta disponível no momento.';
+
+      renderizarAtletasDisponiveis(atletasFiltrados);
+
+      // Atualiza o contador para refletir o filtro
+      if (atletasFiltrados.length > 0) {
+        const contador = document.getElementById('contadorResultados');
+        contador.textContent = posicaoSelecionada
+          ? `${atletasFiltrados.length} atleta(s) para "${posicaoSelecionada}"`
+          : `${atletasFiltrados.length} atleta(s) disponível(is)`;
+      }
+    }
+
+    /**
+     * fazerLogout
+     * Encerra a sessão do usuário e redireciona para o login.
+     */
+    async function fazerLogout() {
+      await clienteSupabase.auth.signOut();
+      window.location.href = 'index.html';
+    }
+
+    // ── 4. INICIALIZAÇÃO ─────────────────────────────────────────
+
+    // Executa ao abrir a página: verifica sessão e carrega o dashboard
+    (async function iniciar() {
+      const usuarioLogado = await verificarAutenticacao();
+      if (!usuarioLogado) return;
+
+      await carregarDashboard(usuarioLogado.id);
+    })();
+  </script>
+
+</body>
+</html>

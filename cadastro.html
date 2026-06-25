@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HandQuiriguaçu — Cadastro</title>
+
+  <!-- Supabase: banco de dados sem backend -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Tailwind: estilização sem escrever CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Inter: tipografia moderna e legível -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+
+    /* Estilo aplicado ao card de tipo selecionado (atleta ou treinador) */
+    .card-tipo.selecionado {
+      border-color: #1d4ed8;
+      background-color: #eff6ff;
+    }
+    .card-tipo.selecionado .icone-tipo {
+      background-color: #dbeafe;
+      color: #1d4ed8;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+
+  <!-- ══════════════════════════════════════════════
+       CARD CENTRAL DO FORMULÁRIO DE CADASTRO
+  ══════════════════════════════════════════════ -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 w-full max-w-md">
+
+    <!-- Logo e título -->
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center gap-2 mb-4">
+        <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="18" stroke="#1d4ed8" stroke-width="2.5"/>
+          <path d="M20 4 C20 4 10 12 10 20 C10 28 20 36 20 36" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+          <path d="M20 4 C20 4 30 12 30 20 C30 28 20 36 20 36" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+          <path d="M4 18 Q20 22 36 18" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="text-xl font-bold text-blue-700">HandQuiriguaçu</span>
+      </div>
+      <h2 class="text-2xl font-bold text-gray-900">Crie sua conta</h2>
+      <p class="text-sm text-gray-500 mt-1">Junte-se à plataforma do handebol regional</p>
+    </div>
+
+    <!-- ── FORMULÁRIO DE CADASTRO ── -->
+    <form id="formularioCadastro" class="space-y-4">
+
+      <!-- Seleção de tipo de conta com cards clicáveis -->
+      <div>
+        <p class="block text-sm font-medium text-gray-700 mb-2">Quero me cadastrar como</p>
+        <div class="grid grid-cols-2 gap-3">
+
+          <!-- Card: Atleta -->
+          <div
+            id="cardAtleta"
+            class="card-tipo selecionado cursor-pointer border-2 border-blue-700 bg-blue-50 rounded-xl p-4 text-center transition-all duration-150"
+            onclick="selecionarTipo('atleta')"
+          >
+            <div class="icone-tipo inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-700 mb-2 mx-auto">
+              <!-- Ícone de pessoa correndo (representa atleta) -->
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <p class="font-semibold text-sm text-gray-800">Atleta</p>
+            <p class="text-xs text-gray-500 mt-0.5">Quero ser recrutado</p>
+          </div>
+
+          <!-- Card: Treinador -->
+          <div
+            id="cardTreinador"
+            class="card-tipo cursor-pointer border-2 border-gray-200 rounded-xl p-4 text-center transition-all duration-150 hover:border-gray-300"
+            onclick="selecionarTipo('treinador')"
+          >
+            <div class="icone-tipo inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 text-gray-500 mb-2 mx-auto">
+              <!-- Ícone de prancheta (representa treinador) -->
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <p class="font-semibold text-sm text-gray-800">Treinador</p>
+            <p class="text-xs text-gray-500 mt-0.5">Quero recrutar atletas</p>
+          </div>
+
+        </div>
+        <!-- Campo oculto que guarda o tipo selecionado -->
+        <input type="hidden" id="tipoSelecionado" value="atleta" />
+      </div>
+
+      <!-- Campo de nome completo -->
+      <div>
+        <label for="nome" class="block text-sm font-medium text-gray-700 mb-1">Nome completo</label>
+        <input
+          id="nome"
+          type="text"
+          placeholder="Seu nome completo"
+          required
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+        />
+      </div>
+
+      <!-- Campo de e-mail -->
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+        <input
+          id="email"
+          type="email"
+          placeholder="seu@email.com"
+          required
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+        />
+      </div>
+
+      <!-- Campo de senha -->
+      <div>
+        <label for="senha" class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+        <input
+          id="senha"
+          type="password"
+          placeholder="Mínimo 6 caracteres"
+          required
+          minlength="6"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+        />
+      </div>
+
+      <!-- Campo de confirmação de senha -->
+      <div>
+        <label for="confirmarSenha" class="block text-sm font-medium text-gray-700 mb-1">Confirmar senha</label>
+        <input
+          id="confirmarSenha"
+          type="password"
+          placeholder="Repita a senha"
+          required
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+        />
+      </div>
+
+      <!-- Mensagem de erro (oculta por padrão) -->
+      <div id="mensagemErro" class="hidden bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">
+        <!-- Texto do erro será inserido via JavaScript -->
+      </div>
+
+      <!-- Mensagem de sucesso (oculta por padrão) -->
+      <div id="mensagemSucesso" class="hidden bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3">
+        <!-- Texto de sucesso será inserido via JavaScript -->
+      </div>
+
+      <!-- Botão de criar conta -->
+      <button
+        type="submit"
+        id="botaoCadastrar"
+        class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
+      >
+        Criar conta
+      </button>
+
+    </form>
+
+    <!-- Link para a tela de login -->
+    <p class="mt-5 text-center text-sm text-gray-500">
+      Já tem conta?
+      <a href="index.html" class="text-blue-700 font-semibold hover:underline">Entrar</a>
+    </p>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       JAVASCRIPT — lógica da página de cadastro
+  ══════════════════════════════════════════════ -->
+  <script>
+    // ── 1. CONFIGURAÇÃO DO SUPABASE ──────────────────────────────
+    const SUPABASE_URL   = 'https://ckznrungfbkbjfcajixm.supabase.co';
+    const SUPABASE_CHAVE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrem5ydW5nZmJrYmpmY2FqaXhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MTY5MTEsImV4cCI6MjA5Nzk5MjkxMX0.1Wl-lKTn_0ZOyL1stOoyGRriP4_f45nm09FIf0bsBzc';
+
+    const clienteSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_CHAVE);
+
+    // ── 2. FUNÇÕES AUXILIARES ────────────────────────────────────
+
+    /**
+     * exibirErro
+     * Mostra uma mensagem de erro na tela e oculta a mensagem de sucesso.
+     * @param mensagem - texto do erro a ser exibido
+     */
+    function exibirErro(mensagem) {
+      const elementoErro = document.getElementById('mensagemErro');
+      elementoErro.textContent = mensagem;
+      elementoErro.classList.remove('hidden');
+      document.getElementById('mensagemSucesso').classList.add('hidden');
+    }
+
+    /**
+     * exibirSucesso
+     * Mostra uma mensagem de sucesso na tela e oculta o erro.
+     * @param mensagem - texto de sucesso a ser exibido
+     */
+    function exibirSucesso(mensagem) {
+      const elementoSucesso = document.getElementById('mensagemSucesso');
+      elementoSucesso.textContent = mensagem;
+      elementoSucesso.classList.remove('hidden');
+      document.getElementById('mensagemErro').classList.add('hidden');
+    }
+
+    /**
+     * esconderMensagens
+     * Oculta tanto o erro quanto o sucesso.
+     */
+    function esconderMensagens() {
+      document.getElementById('mensagemErro').classList.add('hidden');
+      document.getElementById('mensagemSucesso').classList.add('hidden');
+    }
+
+    /**
+     * definirEstadoBotao
+     * Ativa ou desativa o botão durante o processo de cadastro.
+     * @param carregando - true para desativar, false para reativar
+     */
+    function definirEstadoBotao(carregando) {
+      const botao = document.getElementById('botaoCadastrar');
+      botao.disabled = carregando;
+      botao.textContent = carregando ? 'Criando conta...' : 'Criar conta';
+      botao.classList.toggle('opacity-60', carregando);
+    }
+
+    /**
+     * selecionarTipo
+     * Atualiza visualmente os cards de tipo (atleta/treinador)
+     * e guarda o tipo escolhido no campo oculto.
+     * @param tipo - 'atleta' ou 'treinador'
+     */
+    function selecionarTipo(tipo) {
+      // Remove a seleção dos dois cards
+      document.getElementById('cardAtleta').classList.remove(
+        'selecionado', 'border-blue-700', 'bg-blue-50'
+      );
+      document.getElementById('cardAtleta').classList.add('border-gray-200');
+
+      document.getElementById('cardTreinador').classList.remove(
+        'selecionado', 'border-blue-700', 'bg-blue-50'
+      );
+      document.getElementById('cardTreinador').classList.add('border-gray-200');
+
+      // Aplica a seleção no card correto
+      const cardSelecionado = document.getElementById(
+        tipo === 'atleta' ? 'cardAtleta' : 'cardTreinador'
+      );
+      cardSelecionado.classList.add('selecionado', 'border-blue-700', 'bg-blue-50');
+      cardSelecionado.classList.remove('border-gray-200');
+
+      // Salva o tipo escolhido no campo oculto
+      document.getElementById('tipoSelecionado').value = tipo;
+    }
+
+    // ── 3. FUNÇÕES PRINCIPAIS ────────────────────────────────────
+
+    /**
+     * fazerCadastro
+     * Cria uma conta nova no Supabase Auth e salva os dados
+     * adicionais nas tabelas profiles e atletas/treinadores.
+     * @param nome  - nome completo do usuário
+     * @param email - e-mail do usuário
+     * @param senha - senha escolhida
+     * @param tipo  - 'atleta' ou 'treinador'
+     */
+    async function fazerCadastro(nome, email, senha, tipo) {
+      esconderMensagens();
+      definirEstadoBotao(true);
+
+      try {
+        // 1. Cria o usuário no Supabase Auth (signUp)
+        const { data: dadosAuth, error: erroAuth } = await clienteSupabase.auth.signUp({
+          email: email,
+          password: senha,
+        });
+
+        if (erroAuth) {
+          // Traduz os erros mais comuns do Supabase para português
+          if (erroAuth.message.includes('already registered')) {
+            exibirErro('Este e-mail já está cadastrado. Tente fazer login.');
+          } else {
+            exibirErro('Erro ao criar conta: ' + erroAuth.message);
+          }
+          definirEstadoBotao(false);
+          return;
+        }
+
+        const idUsuario = dadosAuth.user.id;
+
+        // 2. Insere uma linha na tabela profiles com id, tipo e nome
+        const { error: erroPerfil } = await clienteSupabase
+          .from('profiles')
+          .insert({ id: idUsuario, tipo: tipo, nome: nome });
+
+        if (erroPerfil) {
+          exibirErro('Conta criada, mas houve erro ao salvar o perfil. Contate o suporte.');
+          definirEstadoBotao(false);
+          return;
+        }
+
+        // 3. Insere linha inicial na tabela específica do tipo de usuário
+        if (tipo === 'atleta') {
+          // Cria um registro vazio para o atleta; ele preencherá depois
+          await clienteSupabase
+            .from('atletas')
+            .insert({ id: idUsuario, disponivel: false });
+        } else {
+          // Cria um registro vazio para o treinador
+          await clienteSupabase
+            .from('treinadores')
+            .insert({ id: idUsuario });
+        }
+
+        // 4. Exibe sucesso e redireciona conforme o tipo
+        exibirSucesso('Conta criada com sucesso! Redirecionando...');
+
+        setTimeout(function () {
+          // Atleta vai para a edição de perfil para preencher seus dados primeiro
+          // Treinador vai direto para o dashboard
+          if (tipo === 'atleta') {
+            window.location.href = 'atleta-editar.html';
+          } else {
+            window.location.href = 'dashboard-treinador.html';
+          }
+        }, 1500);
+
+      } catch (erroInesperado) {
+        exibirErro('Erro de conexão. Verifique sua internet e tente novamente.');
+        definirEstadoBotao(false);
+      }
+    }
+
+    // ── 4. INICIALIZAÇÃO ─────────────────────────────────────────
+
+    // Escuta o envio do formulário
+    document.getElementById('formularioCadastro').addEventListener('submit', function (evento) {
+      evento.preventDefault();
+
+      const nome           = document.getElementById('nome').value.trim();
+      const email          = document.getElementById('email').value.trim();
+      const senha          = document.getElementById('senha').value;
+      const confirmarSenha = document.getElementById('confirmarSenha').value;
+      const tipo           = document.getElementById('tipoSelecionado').value;
+
+      // Valida se as senhas coincidem antes de enviar
+      if (senha !== confirmarSenha) {
+        exibirErro('As senhas não coincidem. Verifique e tente novamente.');
+        return;
+      }
+
+      // Valida comprimento mínimo da senha
+      if (senha.length < 6) {
+        exibirErro('A senha deve ter pelo menos 6 caracteres.');
+        return;
+      }
+
+      fazerCadastro(nome, email, senha, tipo);
+    });
+  </script>
+
+</body>
+</html>

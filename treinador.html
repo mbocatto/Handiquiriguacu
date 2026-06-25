@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HandQuiriguaçu — Dashboard do Treinador</title>
+
+  <!-- Supabase: banco de dados sem backend -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Tailwind: estilização sem escrever CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Inter: tipografia moderna e legível -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+
+  <!-- ══════════════════════════════════════════════
+       BARRA DE NAVEGAÇÃO SUPERIOR
+  ══════════════════════════════════════════════ -->
+  <nav class="bg-white border-b border-gray-200 px-6 py-4">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <!-- Logo -->
+      <a href="dashboard-treinador.html" class="flex items-center gap-2">
+        <svg class="w-7 h-7" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="18" stroke="#1d4ed8" stroke-width="2.5"/>
+          <path d="M20 4 C20 4 10 12 10 20 C10 28 20 36 20 36" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+          <path d="M20 4 C20 4 30 12 30 20 C30 28 20 36 20 36" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+          <path d="M4 18 Q20 22 36 18" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="font-bold text-blue-700">HandQuiriguaçu</span>
+      </a>
+
+      <!-- Nome do treinador + botão de logout -->
+      <div class="flex items-center gap-4">
+        <span id="nomeTreinadorNav" class="text-sm font-medium text-gray-700 hidden sm:block"></span>
+        <button
+          onclick="fazerLogout()"
+          class="border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium py-1.5 px-4 rounded-lg text-sm transition-colors"
+        >
+          Sair
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════
+       CONTEÚDO PRINCIPAL
+  ══════════════════════════════════════════════ -->
+  <main class="max-w-5xl mx-auto px-6 py-8 space-y-6">
+
+    <!-- ── CARD DE BOAS-VINDAS ── -->
+    <div class="bg-blue-700 rounded-xl p-6 text-white">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-blue-200 text-sm font-medium mb-1">Bem-vindo de volta,</p>
+          <h1 id="nomeTreinador" class="text-2xl font-bold"></h1>
+          <p id="clubeTreinador" class="text-blue-200 text-sm mt-1"></p>
+        </div>
+        <!-- Botão de editar perfil -->
+        <a
+          href="treinador-editar.html"
+          class="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-medium py-1.5 px-3 rounded-lg text-xs transition-colors shrink-0"
+        >
+          <!-- Ícone de lápis -->
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+          Editar perfil
+        </a>
+      </div>
+    </div>
+
+    <!-- ── SEÇÃO: ATLETAS DISPONÍVEIS ── -->
+    <div>
+      <!-- Cabeçalho da seção com título e filtro -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">Atletas disponíveis</h2>
+          <p class="text-sm text-gray-500">Atletas que estão abertos para propostas de recrutamento</p>
+        </div>
+
+        <!-- Filtro por posição -->
+        <div class="flex items-center gap-2">
+          <label for="filtroPosicao" class="text-sm font-medium text-gray-600 whitespace-nowrap">Filtrar por:</label>
+          <select
+            id="filtroPosicao"
+            onchange="filtrarPorPosicao()"
+            class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Todas as posições</option>
+            <option value="Goleiro">Goleiro</option>
+            <option value="Ponta Esquerda">Ponta Esquerda</option>
+            <option value="Ponta Direita">Ponta Direita</option>
+            <option value="Meia Esquerda">Meia Esquerda</option>
+            <option value="Meia Direita">Meia Direita</option>
+            <option value="Central">Central</option>
+            <option value="Pivô">Pivô</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Estado de carregamento da lista de atletas -->
+      <div id="estadoCarregando" class="text-center py-12">
+        <div class="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-700 rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-500 text-sm">Buscando atletas disponíveis...</p>
+      </div>
+
+      <!-- Grade de cards dos atletas (preenchida via JavaScript) -->
+      <div id="gradeAtletas" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Os cards são inseridos aqui pelo JavaScript -->
+      </div>
+
+      <!-- Estado vazio: nenhum atleta disponível -->
+      <div id="estadoVazio" class="hidden text-center py-16 bg-white rounded-xl border border-gray-100">
+        <!-- Ícone de lupa -->
+        <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <p class="text-gray-500 font-medium">Nenhum atleta encontrado</p>
+        <p id="textoEstadoVazio" class="text-gray-400 text-sm mt-1">
+          Não há atletas disponíveis no momento.
+        </p>
+      </div>
+
+      <!-- Contador de resultados -->
+      <p id="contadorResultados" class="hidden text-xs text-gray-400 mt-4 text-right"></p>
+
+    </div>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════════
+       JAVASCRIPT — lógica do dashboard do treinador
+  ══════════════════════════════════════════════ -->
+  <script>
+    // ── 1. CONFIGURAÇÃO DO SUPABASE ──────────────────────────────
+    const SUPABASE_URL   = 'https://ckznrungfbkbjfcajixm.supabase.co';
+    const SUPABASE_CHAVE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrem5ydW5nZmJrYmpmY2FqaXhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MTY5MTEsImV4cCI6MjA5Nzk5MjkxMX0.1Wl-lKTn_0ZOyL1stOoyGRriP4_f45nm09FIf0bsBzc';
+
+    const clienteSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_CHAVE);
+
+    // ── 2. FUNÇÕES AUXILIARES ────────────────────────────────────
+
+    /**
+     * calcularIdade
+     * Calcula a idade em anos a partir de uma data de nascimento.
+     * @param dataNasc - string no formato 'YYYY-MM-DD'
+     * @returns número inteiro ou null se não houver data
+     */
+    function calcularIdade(dataNasc) {
+      if (!dataNasc) return null;
+
+      const hoje       = new Date();
+      const nascimento = new Date(dataNasc);
+      let idade        = hoje.getFullYear() - nascimento.getFullYear();
+      const mes        = hoje.getMonth();
+      const mesNasc    = nascimento.getMonth();
+
+      if (mes < mesNasc || (mes === mesNasc && hoje.getDate() < nascimento.getDate())) {
+        idade--;
+      }
+      return idade;
+    }
+
+    /**
+     * renderizarCardAtleta
+     * Recebe os dados de um atleta e retorna o HTML completo do card.
+     * O card é inserido na grade de atletas disponíveis.
+     * @param atleta - objeto com campos do atleta (mesclando profiles + atletas)
+     * @returns string HTML do card
+     */
+    function renderizarCardAtleta(atleta) {
+      const nome     = atleta.profiles?.nome      || 'Atleta';
+      const fotoUrl  = atleta.profiles?.avatar_url || null;
+      const posicao  = atleta.posicao             || 'Posição não informada';
+      const inicial  = nome[0].toUpperCase();
+      const idade    = calcularIdade(atleta.data_nasc);
+      const idadeStr = idade !== null ? `${idade} anos` : 'Idade não informada';
+
+      // Monta o avatar: foto real se houver, inicial do nome se não houver
+      const avatarHtml = fotoUrl
+        ? `<img src="${fotoUrl}" alt="Foto de ${nome}" class="w-full h-full object-cover rounded-full" />`
+        : inicial;
+
+      // Retorna o HTML do card como string para ser inserido no DOM
+      return `
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col hover:shadow-md transition-shadow">
+          <!-- Topo do card: avatar e badge de disponível -->
+          <div class="flex items-start justify-between mb-4">
+            <!-- Avatar com foto ou inicial do nome -->
+            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg shrink-0 overflow-hidden">
+              ${avatarHtml}
+            </div>
+            <!-- Badge verde de disponível -->
+            <span class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded-full">
+              Disponível
+            </span>
+          </div>
+
+          <!-- Nome e posição -->
+          <div class="flex-1">
+            <h3 class="font-semibold text-gray-900 text-sm mb-0.5 truncate">${nome}</h3>
+            <p class="text-blue-700 text-xs font-medium mb-3">${posicao}</p>
+
+            <!-- Dados rápidos do atleta -->
+            <div class="space-y-1 text-xs text-gray-500">
+              <!-- Idade -->
+              <div class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                </svg>
+                <span>${idadeStr}</span>
+              </div>
+              <!-- Altura e peso (se disponíveis) -->
+              ${atleta.altura_cm || atleta.peso_kg ? `
+              <div class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                </svg>
+                <span>
+                  ${atleta.altura_cm ? atleta.altura_cm + ' cm' : ''}
+                  ${atleta.altura_cm && atleta.peso_kg ? '·' : ''}
+                  ${atleta.peso_kg ? atleta.peso_kg + ' kg' : ''}
+                </span>
+              </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Botão para ver o perfil completo -->
+          <a
+            href="atleta.html?id=${atleta.id}"
+            class="mt-4 w-full text-center bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors"
+          >
+            Ver perfil
+          </a>
+        </div>
+      `;
+    }
+
+    /**
+     * exibirEstadoVazio
+     * Mostra a mensagem de "nenhum atleta encontrado" com texto adaptado.
+     * @param comFiltro - true se há filtro ativo (muda o texto exibido)
+     */
+    function exibirEstadoVazio(comFiltro) {
+      document.getElementById('estadoVazio').classList.remove('hidden');
+      document.getElementById('gradeAtletas').classList.add('hidden');
+      document.getElementById('contadorResultados').classList.add('hidden');
+
+      const textoVazio = document.getElementById('textoEstadoVazio');
+      if (comFiltro) {
+        textoVazio.textContent = 'Tente remover o filtro para ver todos os atletas disponíveis.';
+      } else {
+        textoVazio.textContent = 'Não há atletas disponíveis no momento.';
+      }
+    }
+
+    // ── 3. FUNÇÕES PRINCIPAIS ────────────────────────────────────
+
+    /**
+     * verificarAutenticacao
+     * Verifica se há um usuário logado. Redireciona se não houver.
+     * @returns o objeto do usuário logado ou null
+     */
+    async function verificarAutenticacao() {
+      const { data: { session } } = await clienteSupabase.auth.getSession();
+      if (!session) {
+        window.location.href = 'index.html';
+        return null;
+      }
+      return session.user;
+    }
+
+    /**
+     * carregarDashboard
+     * Carrega os dados do treinador logado e a lista de atletas disponíveis.
+     * @param idTreinador - UUID do treinador logado
+     */
+    async function carregarDashboard(idTreinador) {
+      try {
+        // 1. Busca o perfil do treinador logado (nome e clube)
+        const [resultadoPerfil, resultadoTreinador] = await Promise.all([
+          clienteSupabase.from('profiles').select('nome').eq('id', idTreinador).single(),
+          clienteSupabase.from('treinadores').select('clube, cidade').eq('id', idTreinador).single(),
+        ]);
+
+        // 2. Exibe nome e clube na tela
+        if (resultadoPerfil.data) {
+          const nome = resultadoPerfil.data.nome || 'Treinador';
+          document.getElementById('nomeTreinador').textContent    = nome;
+          document.getElementById('nomeTreinadorNav').textContent = nome;
+        }
+
+        if (resultadoTreinador.data) {
+          const { clube, cidade } = resultadoTreinador.data;
+          let descricao = '';
+          if (clube)  descricao += clube;
+          if (cidade) descricao += (clube ? ' · ' : '') + cidade;
+          document.getElementById('clubeTreinador').textContent = descricao || 'Clube não informado';
+        }
+
+        // 3. Carrega a lista de atletas disponíveis (sem filtro inicial)
+        await buscarAtletasDisponiveis(null);
+
+      } catch (erro) {
+        console.error('Erro ao carregar dashboard:', erro);
+      }
+    }
+
+    /**
+     * buscarAtletasDisponiveis
+     * Busca todos os atletas com disponivel = true na tabela atletas,
+     * junto com o nome de cada um na tabela profiles (via JOIN).
+     * @param posicaoFiltro - posição para filtrar (null = sem filtro)
+     */
+    async function buscarAtletasDisponiveis(posicaoFiltro) {
+      // Esconde a grade e mostra o carregamento
+      document.getElementById('gradeAtletas').classList.add('hidden');
+      document.getElementById('estadoVazio').classList.add('hidden');
+      document.getElementById('contadorResultados').classList.add('hidden');
+      document.getElementById('estadoCarregando').classList.remove('hidden');
+
+      try {
+        // 1. Faz JOIN entre atletas e profiles para pegar o nome junto
+        // O Supabase permite selecionar dados de tabelas relacionadas via FK
+        let consulta = clienteSupabase
+          .from('atletas')
+          .select(`
+            id,
+            posicao,
+            mao_dominante,
+            altura_cm,
+            peso_kg,
+            data_nasc,
+            disponivel,
+            profiles ( nome, avatar_url )
+          `)
+          .eq('disponivel', true) // 2. Filtra por disponivel = true
+          .order('id');
+
+        // 3. Se houver filtro de posição, aplica ele também
+        if (posicaoFiltro) {
+          consulta = consulta.eq('posicao', posicaoFiltro);
+        }
+
+        const { data: atletas, error } = await consulta;
+
+        document.getElementById('estadoCarregando').classList.add('hidden');
+
+        if (error) {
+          console.error('Erro ao buscar atletas:', error);
+          exibirEstadoVazio(!!posicaoFiltro);
+          return;
+        }
+
+        // Nenhum atleta encontrado: exibe estado vazio
+        if (!atletas || atletas.length === 0) {
+          exibirEstadoVazio(!!posicaoFiltro);
+          return;
+        }
+
+        // 4. Renderiza os cards na tela
+        const grade = document.getElementById('gradeAtletas');
+        grade.innerHTML = atletas.map(renderizarCardAtleta).join('');
+        grade.classList.remove('hidden');
+
+        // Exibe o contador de resultados
+        const contador = document.getElementById('contadorResultados');
+        const textoContador = posicaoFiltro
+          ? `${atletas.length} atleta(s) encontrado(s) para "${posicaoFiltro}"`
+          : `${atletas.length} atleta(s) disponível(is)`;
+        contador.textContent = textoContador;
+        contador.classList.remove('hidden');
+
+      } catch (erroInesperado) {
+        document.getElementById('estadoCarregando').classList.add('hidden');
+        console.error('Erro inesperado:', erroInesperado);
+        exibirEstadoVazio(!!posicaoFiltro);
+      }
+    }
+
+    /**
+     * filtrarPorPosicao
+     * Lê o valor do select de filtro e chama a busca com o filtro escolhido.
+     * Chamada pelo evento onchange do select na página.
+     */
+    function filtrarPorPosicao() {
+      const posicaoSelecionada = document.getElementById('filtroPosicao').value;
+      // Passa null se a opção "Todas as posições" estiver selecionada
+      buscarAtletasDisponiveis(posicaoSelecionada || null);
+    }
+
+    /**
+     * fazerLogout
+     * Encerra a sessão do usuário e redireciona para o login.
+     */
+    async function fazerLogout() {
+      await clienteSupabase.auth.signOut();
+      window.location.href = 'index.html';
+    }
+
+    // ── 4. INICIALIZAÇÃO ─────────────────────────────────────────
+
+    // Executa ao abrir a página: verifica sessão e carrega o dashboard
+    (async function iniciar() {
+      const usuarioLogado = await verificarAutenticacao();
+      if (!usuarioLogado) return;
+
+      await carregarDashboard(usuarioLogado.id);
+    })();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HandQuiriguaçu — Meu Dashboard</title>
+
+  <!-- Supabase: banco de dados sem backend -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Tailwind: estilização sem escrever CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Inter: tipografia moderna e legível -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+
+  <!-- ══════════════════════════════════════════════
+       BARRA DE NAVEGAÇÃO SUPERIOR
+  ══════════════════════════════════════════════ -->
+  <nav class="bg-white border-b border-gray-200 px-6 py-4">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <!-- Logo -->
+      <a href="dashboard-atleta.html" class="flex items-center gap-2">
+        <svg class="w-7 h-7" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="18" stroke="#1d4ed8" stroke-width="2.5"/>
+          <path d="M20 4 C20 4 10 12 10 20 C10 28 20 36 20 36" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+          <path d="M20 4 C20 4 30 12 30 20 C30 28 20 36 20 36" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+          <path d="M4 18 Q20 22 36 18" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="font-bold text-blue-700">HandQuiriguaçu</span>
+      </a>
+
+      <!-- Nome do atleta + botão de logout -->
+      <div class="flex items-center gap-4">
+        <span id="nomeAtletaNav" class="text-sm font-medium text-gray-700 hidden sm:block"></span>
+        <button
+          onclick="fazerLogout()"
+          class="border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium py-1.5 px-4 rounded-lg text-sm transition-colors"
+        >
+          Sair
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════
+       CONTEÚDO PRINCIPAL
+  ══════════════════════════════════════════════ -->
+  <main class="max-w-4xl mx-auto px-6 py-8 space-y-6">
+
+    <!-- Estado de carregamento -->
+    <div id="estadoCarregando" class="text-center py-16">
+      <div class="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-700 rounded-full animate-spin mb-4"></div>
+      <p class="text-gray-500 text-sm">Carregando seu dashboard...</p>
+    </div>
+
+    <!-- Conteúdo do dashboard (oculto até os dados carregarem) -->
+    <div id="conteudoDashboard" class="hidden space-y-6">
+
+      <!-- ── CARD DE BOAS-VINDAS ── -->
+      <!-- Card azul com saudação, resumo do perfil e atalhos rápidos -->
+      <div class="bg-blue-700 rounded-xl p-6 text-white">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+
+          <!-- Lado esquerdo: avatar + nome + posição -->
+          <div class="flex items-center gap-4">
+
+            <!-- Avatar: foto ou inicial -->
+            <div class="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white text-xl font-bold overflow-hidden shrink-0">
+              <span id="inicialAvatar"></span>
+              <img id="fotoAvatar" class="hidden w-full h-full object-cover" alt="Foto do atleta" />
+            </div>
+
+            <!-- Nome, saudação e posição -->
+            <div>
+              <p class="text-blue-200 text-sm font-medium">Bem-vindo de volta,</p>
+              <h1 id="nomeAtleta" class="text-xl font-bold"></h1>
+              <div class="flex items-center gap-2 mt-1">
+                <p id="posicaoAtleta" class="text-blue-200 text-sm"></p>
+                <!-- Badge de disponibilidade -->
+                <span id="badgeDisponibilidade" class="text-xs font-semibold px-2 py-0.5 rounded-full"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lado direito: atalhos rápidos -->
+          <div class="flex gap-2 shrink-0">
+            <!-- Botão: ver perfil público -->
+            <a
+              href="atleta.html"
+              class="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 px-3 rounded-lg text-xs transition-colors"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+              Ver perfil
+            </a>
+            <!-- Botão: editar perfil -->
+            <a
+              href="atleta-editar.html"
+              class="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 px-3 rounded-lg text-xs transition-colors"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              Editar perfil
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── DADOS FÍSICOS RÁPIDOS ── -->
+      <!-- Quatro cards lado a lado com os dados físicos principais -->
+      <div>
+        <h2 class="text-base font-bold text-gray-900 mb-3">Seus dados físicos</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+
+          <!-- Card: Altura -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
+            <p class="text-xs text-gray-500 mb-1">Altura</p>
+            <p id="alturaAtleta" class="text-2xl font-bold text-blue-700">—</p>
+            <p class="text-xs text-gray-400">cm</p>
+          </div>
+
+          <!-- Card: Peso -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
+            <p class="text-xs text-gray-500 mb-1">Peso</p>
+            <p id="pesoAtleta" class="text-2xl font-bold text-blue-700">—</p>
+            <p class="text-xs text-gray-400">kg</p>
+          </div>
+
+          <!-- Card: Idade -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
+            <p class="text-xs text-gray-500 mb-1">Idade</p>
+            <p id="idadeAtleta" class="text-2xl font-bold text-blue-700">—</p>
+            <p class="text-xs text-gray-400">anos</p>
+          </div>
+
+          <!-- Card: Mão dominante -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
+            <p class="text-xs text-gray-500 mb-1">Mão</p>
+            <p id="maoDominanteAtleta" class="text-lg font-bold text-blue-700 leading-tight">—</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── ESTATÍSTICAS DO PERFIL ── -->
+      <!-- Cards visuais de estatísticas — valores fixos (placeholder para o TCC)
+           Em produção real, seriam alimentados por uma tabela de eventos no banco -->
+      <div>
+        <h2 class="text-base font-bold text-gray-900 mb-3">Estatísticas do perfil</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <!-- Card: Visualizações do perfil -->
+          <!-- Nota: valor fixo como placeholder. Em produção, viria de uma tabela
+               que registraria cada acesso à página atleta.html?id=UUID -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-gray-900">0</p>
+              <p class="text-sm text-gray-500">Visualizações do perfil</p>
+              <p class="text-xs text-gray-400 mt-0.5">Funcionalidade em breve</p>
+            </div>
+          </div>
+
+          <!-- Card: Contatos recebidos -->
+          <!-- Nota: valor fixo como placeholder. Em produção, viria de uma tabela
+               que registraria mensagens de treinadores para o atleta -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-gray-900">0</p>
+              <p class="text-sm text-gray-500">Contatos recebidos</p>
+              <p class="text-xs text-gray-400 mt-0.5">Funcionalidade em breve</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── STATUS DO PERFIL ── -->
+      <!-- Card que mostra se o perfil está completo ou precisa de atenção -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <h2 class="text-base font-bold text-gray-900 mb-4">Status do perfil</h2>
+        <div id="listaStatusPerfil" class="space-y-3">
+          <!-- Os itens de status serão inseridos via JavaScript -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════════
+       JAVASCRIPT — lógica do dashboard do atleta
+  ══════════════════════════════════════════════ -->
+  <script>
+    // ── 1. CONFIGURAÇÃO DO SUPABASE ──────────────────────────────
+    const SUPABASE_URL   = 'https://ckznrungfbkbjfcajixm.supabase.co';
+    const SUPABASE_CHAVE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrem5ydW5nZmJrYmpmY2FqaXhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MTY5MTEsImV4cCI6MjA5Nzk5MjkxMX0.1Wl-lKTn_0ZOyL1stOoyGRriP4_f45nm09FIf0bsBzc';
+
+    const clienteSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_CHAVE);
+
+    // ── 2. FUNÇÕES AUXILIARES ────────────────────────────────────
+
+    /**
+     * calcularIdade
+     * Calcula a idade em anos a partir de uma data de nascimento.
+     * @param dataNasc - string no formato 'YYYY-MM-DD'
+     * @returns número inteiro ou null se não houver data
+     */
+    function calcularIdade(dataNasc) {
+      if (!dataNasc) return null;
+      const hoje       = new Date();
+      const nascimento = new Date(dataNasc);
+      let idade        = hoje.getFullYear() - nascimento.getFullYear();
+      const mes        = hoje.getMonth();
+      const mesNasc    = nascimento.getMonth();
+      if (mes < mesNasc || (mes === mesNasc && hoje.getDate() < nascimento.getDate())) {
+        idade--;
+      }
+      return idade;
+    }
+
+    /**
+     * renderizarStatusPerfil
+     * Verifica quais campos do perfil estão preenchidos e exibe
+     * uma lista de itens indicando o que está completo ou pendente.
+     * Não faz chamadas ao banco — usa os dados já carregados.
+     * @param perfil - objeto da tabela profiles
+     * @param atleta - objeto da tabela atletas
+     */
+    function renderizarStatusPerfil(perfil, atleta) {
+      // Define os campos a verificar e seus rótulos amigáveis
+      const verificacoes = [
+        { rotulo: 'Foto de perfil',    completo: !!perfil.avatar_url        },
+        { rotulo: 'Posição em campo',  completo: !!atleta.posicao           },
+        { rotulo: 'Dados físicos',     completo: !!(atleta.altura_cm && atleta.peso_kg) },
+        { rotulo: 'Data de nascimento',completo: !!atleta.data_nasc         },
+        { rotulo: 'Apresentação (bio)',completo: !!atleta.bio               },
+      ];
+
+      // Gera o HTML de cada item da lista de status
+      const htmlItens = verificacoes.map(function (item) {
+        if (item.completo) {
+          // Item completo: ícone verde de check
+          return `
+            <div class="flex items-center gap-3">
+              <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <span class="text-sm text-gray-700">${item.rotulo}</span>
+            </div>
+          `;
+        } else {
+          // Item pendente: ícone laranja de aviso
+          return `
+            <div class="flex items-center gap-3">
+              <div class="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                <svg class="w-3 h-3 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <span class="text-sm text-gray-500">${item.rotulo} <span class="text-orange-500 font-medium">— pendente</span></span>
+            </div>
+          `;
+        }
+      }).join('');
+
+      document.getElementById('listaStatusPerfil').innerHTML = htmlItens;
+    }
+
+    /**
+     * preencherDashboard
+     * Recebe os dados do banco e preenche todos os elementos da página.
+     * @param perfil - objeto da tabela profiles
+     * @param atleta - objeto da tabela atletas
+     */
+    function preencherDashboard(perfil, atleta) {
+      const nome = perfil.nome || 'Atleta';
+
+      // Nome na navbar e no card de boas-vindas
+      document.getElementById('nomeAtletaNav').textContent = nome;
+      document.getElementById('nomeAtleta').textContent    = nome;
+
+      // Avatar: foto ou inicial
+      document.getElementById('inicialAvatar').textContent = nome[0].toUpperCase();
+      if (perfil.avatar_url) {
+        const foto = document.getElementById('fotoAvatar');
+        foto.src = perfil.avatar_url;
+        foto.classList.remove('hidden');
+        document.getElementById('inicialAvatar').classList.add('hidden');
+      }
+
+      // Posição
+      document.getElementById('posicaoAtleta').textContent = atleta.posicao || 'Posição não informada';
+
+      // Badge de disponibilidade
+      const badge = document.getElementById('badgeDisponibilidade');
+      if (atleta.disponivel) {
+        badge.textContent = 'Disponível';
+        badge.className   = 'bg-green-400 bg-opacity-30 text-green-100 text-xs font-semibold px-2 py-0.5 rounded-full';
+      } else {
+        badge.textContent = 'Indisponível';
+        badge.className   = 'bg-blue-500 text-blue-100 text-xs font-semibold px-2 py-0.5 rounded-full';
+      }
+
+      // Dados físicos
+      document.getElementById('alturaAtleta').textContent       = atleta.altura_cm     || '—';
+      document.getElementById('pesoAtleta').textContent         = atleta.peso_kg       || '—';
+      document.getElementById('maoDominanteAtleta').textContent = atleta.mao_dominante || '—';
+
+      // Idade calculada a partir da data de nascimento
+      const idade = calcularIdade(atleta.data_nasc);
+      document.getElementById('idadeAtleta').textContent = idade !== null ? idade : '—';
+
+      // Status do perfil (checklist de campos preenchidos)
+      renderizarStatusPerfil(perfil, atleta);
+    }
+
+    // ── 3. FUNÇÕES PRINCIPAIS ────────────────────────────────────
+
+    /**
+     * verificarAutenticacao
+     * Verifica se há um usuário logado. Redireciona se não houver.
+     * @returns o objeto do usuário logado ou null
+     */
+    async function verificarAutenticacao() {
+      const { data: { session } } = await clienteSupabase.auth.getSession();
+      if (!session) {
+        window.location.href = 'index.html';
+        return null;
+      }
+      return session.user;
+    }
+
+    /**
+     * carregarDashboard
+     * Busca os dados do atleta logado e preenche o dashboard.
+     * @param idAtleta - UUID do atleta logado
+     */
+    async function carregarDashboard(idAtleta) {
+      try {
+        // Busca dados nas duas tabelas em paralelo para maior velocidade
+        const [resultadoPerfil, resultadoAtleta] = await Promise.all([
+          clienteSupabase.from('profiles').select('*').eq('id', idAtleta).single(),
+          clienteSupabase.from('atletas').select('*').eq('id', idAtleta).single(),
+        ]);
+
+        if (resultadoPerfil.error || resultadoAtleta.error) {
+          console.error('Erro ao carregar dashboard:', resultadoPerfil.error || resultadoAtleta.error);
+          return;
+        }
+
+        // Preenche todos os elementos da página com os dados recebidos
+        preencherDashboard(resultadoPerfil.data, resultadoAtleta.data);
+
+        // Exibe o conteúdo e esconde o spinner
+        document.getElementById('estadoCarregando').classList.add('hidden');
+        document.getElementById('conteudoDashboard').classList.remove('hidden');
+
+      } catch (erro) {
+        console.error('Erro inesperado:', erro);
+      }
+    }
+
+    /**
+     * fazerLogout
+     * Encerra a sessão do usuário e redireciona para o login.
+     */
+    async function fazerLogout() {
+      await clienteSupabase.auth.signOut();
+      window.location.href = 'index.html';
+    }
+
+    // ── 4. INICIALIZAÇÃO ─────────────────────────────────────────
+
+    // Executa ao abrir a página: verifica sessão e carrega o dashboard
+    (async function iniciar() {
+      const usuarioLogado = await verificarAutenticacao();
+      if (!usuarioLogado) return;
+
+      await carregarDashboard(usuarioLogado.id);
+    })();
+  </script>
+
+</body>
+</html>

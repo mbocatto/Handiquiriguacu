@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HandQuiriguaçu — Editar Perfil do Treinador</title>
+
+  <!-- Supabase: banco de dados sem backend -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Tailwind: estilização sem escrever CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Inter: tipografia moderna e legível -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+
+  <!-- ══════════════════════════════════════════════
+       BARRA DE NAVEGAÇÃO SUPERIOR
+  ══════════════════════════════════════════════ -->
+  <nav class="bg-white border-b border-gray-200 px-6 py-4">
+    <div class="max-w-2xl mx-auto flex items-center justify-between">
+      <!-- Logo: clicando volta para o dashboard -->
+      <a href="dashboard-treinador.html" class="flex items-center gap-2">
+        <svg class="w-7 h-7" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="18" stroke="#1d4ed8" stroke-width="2.5"/>
+          <path d="M20 4 C20 4 10 12 10 20 C10 28 20 36 20 36" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+          <path d="M20 4 C20 4 30 12 30 20 C30 28 20 36 20 36" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+          <path d="M4 18 Q20 22 36 18" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="font-bold text-blue-700">HandQuiriguaçu</span>
+      </a>
+
+      <!-- Botão de logout -->
+      <button
+        onclick="fazerLogout()"
+        class="border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium py-1.5 px-4 rounded-lg text-sm transition-colors"
+      >
+        Sair
+      </button>
+    </div>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════
+       CONTEÚDO PRINCIPAL
+  ══════════════════════════════════════════════ -->
+  <main class="max-w-2xl mx-auto px-6 py-8">
+
+    <!-- Cabeçalho da página -->
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">Editar perfil</h1>
+      <p class="text-sm text-gray-500 mt-1">Mantenha suas informações atualizadas</p>
+    </div>
+
+    <!-- Estado de carregamento (visível enquanto os dados chegam do banco) -->
+    <div id="estadoCarregando" class="text-center py-16">
+      <div class="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-700 rounded-full animate-spin mb-4"></div>
+      <p class="text-gray-500 text-sm">Carregando seus dados...</p>
+    </div>
+
+    <!-- Formulário de edição (oculto até os dados chegarem) -->
+    <form id="formularioEdicao" class="hidden space-y-6" onsubmit="return false;">
+
+      <!-- ── SEÇÃO 1: FOTO DE PERFIL ── -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-base font-bold text-gray-800 mb-4 pb-3 border-b border-gray-100">
+          Foto de perfil
+        </h2>
+
+        <div class="flex items-center gap-6">
+
+          <!-- Pré-visualização da foto atual -->
+          <div class="shrink-0">
+            <!-- Círculo que mostra a foto ou a inicial do nome -->
+            <div id="previewFoto" class="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-2xl font-bold overflow-hidden">
+              <span id="inicialPreview">?</span>
+              <!-- A foto será inserida aqui via JavaScript quando houver uma selecionada -->
+              <img id="imgPreview" class="hidden w-full h-full object-cover" alt="Pré-visualização" />
+            </div>
+          </div>
+
+          <!-- Controles de upload -->
+          <div class="flex-1">
+            <!-- Input de arquivo oculto — ativado pelo botão abaixo -->
+            <input
+              id="inputFoto"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              onchange="preVisualizarFoto(event)"
+            />
+
+            <!-- Botão que abre o seletor de arquivo -->
+            <button
+              type="button"
+              onclick="document.getElementById('inputFoto').click()"
+              class="border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg text-sm transition-colors"
+            >
+              Escolher foto
+            </button>
+
+            <p class="text-xs text-gray-400 mt-2">JPG, PNG ou WEBP. Máximo 2 MB.</p>
+
+            <!-- Nome do arquivo selecionado (aparece após escolher a foto) -->
+            <p id="nomeFotoSelecionada" class="hidden text-xs text-blue-600 font-medium mt-1"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SEÇÃO 2: INFORMAÇÕES BÁSICAS ── -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-base font-bold text-gray-800 mb-4 pb-3 border-b border-gray-100">
+          Informações básicas
+        </h2>
+
+        <div class="space-y-4">
+
+          <!-- Nome completo -->
+          <div>
+            <label for="nome" class="block text-sm font-medium text-gray-700 mb-1">Nome completo</label>
+            <input
+              id="nome"
+              type="text"
+              placeholder="Seu nome completo"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+          </div>
+
+          <!-- Bio / apresentação profissional -->
+          <div>
+            <label for="bio" class="block text-sm font-medium text-gray-700 mb-1">Apresentação</label>
+            <textarea
+              id="bio"
+              rows="4"
+              placeholder="Conte sobre sua experiência, conquistas e metodologia de trabalho..."
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+            ></textarea>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── SEÇÃO 3: DADOS PROFISSIONAIS ── -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-base font-bold text-gray-800 mb-4 pb-3 border-b border-gray-100">
+          Dados profissionais
+        </h2>
+
+        <div class="space-y-4">
+
+          <!-- Clube / instituição atual -->
+          <div>
+            <label for="clube" class="block text-sm font-medium text-gray-700 mb-1">Clube ou instituição</label>
+            <input
+              id="clube"
+              type="text"
+              placeholder="Ex: Associação Handball Cascavel"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+          </div>
+
+          <!-- Cidade onde atua -->
+          <div>
+            <label for="cidade" class="block text-sm font-medium text-gray-700 mb-1">Cidade</label>
+            <input
+              id="cidade"
+              type="text"
+              placeholder="Ex: Cascavel - PR"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── MENSAGENS DE FEEDBACK ── -->
+
+      <!-- Mensagem de erro -->
+      <div id="mensagemErro" class="hidden bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">
+        <!-- Texto do erro será inserido via JavaScript -->
+      </div>
+
+      <!-- Mensagem de sucesso -->
+      <div id="mensagemSucesso" class="hidden bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3 flex items-center gap-2">
+        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span id="textoSucesso"></span>
+      </div>
+
+      <!-- ── BOTÕES DE AÇÃO ── -->
+      <div class="flex flex-col sm:flex-row gap-3">
+        <!-- Botão principal: salvar -->
+        <button
+          id="botaoSalvar"
+          onclick="salvarAlteracoes()"
+          class="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
+        >
+          Salvar alterações
+        </button>
+
+        <!-- Botão secundário: cancelar e voltar para o dashboard -->
+        <a
+          href="treinador.html"
+          class="flex-1 text-center border border-blue-700 text-blue-700 hover:bg-blue-50 font-semibold py-2 px-4 rounded-lg text-sm transition-colors"
+        >
+          Cancelar
+        </a>
+      </div>
+
+    </form>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════════
+       JAVASCRIPT — lógica da edição do perfil do treinador
+  ══════════════════════════════════════════════ -->
+  <script>
+    // ── 1. CONFIGURAÇÃO DO SUPABASE ──────────────────────────────
+    const SUPABASE_URL   = 'https://ckznrungfbkbjfcajixm.supabase.co';
+    const SUPABASE_CHAVE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrem5ydW5nZmJrYmpmY2FqaXhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MTY5MTEsImV4cCI6MjA5Nzk5MjkxMX0.1Wl-lKTn_0ZOyL1stOoyGRriP4_f45nm09FIf0bsBzc';
+
+    const clienteSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_CHAVE);
+
+    // ID do usuário logado (preenchido na inicialização)
+    let idUsuarioAtual = null;
+
+    // ── 2. FUNÇÕES AUXILIARES ────────────────────────────────────
+
+    /**
+     * exibirErro
+     * Mostra uma mensagem de erro na tela e oculta o sucesso.
+     * @param mensagem - texto do erro
+     */
+    function exibirErro(mensagem) {
+      const elementoErro = document.getElementById('mensagemErro');
+      elementoErro.textContent = mensagem;
+      elementoErro.classList.remove('hidden');
+      document.getElementById('mensagemSucesso').classList.add('hidden');
+    }
+
+    /**
+     * exibirSucesso
+     * Mostra uma mensagem de sucesso na tela e oculta o erro.
+     * @param mensagem - texto de sucesso
+     */
+    function exibirSucesso(mensagem) {
+      document.getElementById('textoSucesso').textContent = mensagem;
+      document.getElementById('mensagemSucesso').classList.remove('hidden');
+      document.getElementById('mensagemErro').classList.add('hidden');
+    }
+
+    /**
+     * definirEstadoBotao
+     * Ativa ou desativa o botão de salvar durante o envio.
+     * @param salvando - true para desativar, false para reativar
+     */
+    function definirEstadoBotao(salvando) {
+      const botao = document.getElementById('botaoSalvar');
+      botao.disabled = salvando;
+      botao.textContent = salvando ? 'Salvando...' : 'Salvar alterações';
+      botao.classList.toggle('opacity-60', salvando);
+    }
+
+    /**
+     * preVisualizarFoto
+     * Quando o usuário seleciona uma foto, exibe a pré-visualização
+     * antes de salvar. A foto só vai para o Supabase ao clicar em "Salvar".
+     * @param evento - evento do input type="file"
+     */
+    function preVisualizarFoto(evento) {
+      const arquivo = evento.target.files[0];
+      if (!arquivo) return;
+
+      // Validação de tamanho: máximo 2 MB
+      if (arquivo.size > 2 * 1024 * 1024) {
+        exibirErro('A foto deve ter no máximo 2 MB.');
+        evento.target.value = '';
+        return;
+      }
+
+      // FileReader lê o arquivo localmente e gera uma URL temporária para preview
+      const leitor = new FileReader();
+      leitor.onload = function (e) {
+        // Esconde a inicial e exibe a imagem de pré-visualização
+        document.getElementById('inicialPreview').classList.add('hidden');
+        const imgPreview = document.getElementById('imgPreview');
+        imgPreview.src = e.target.result;
+        imgPreview.classList.remove('hidden');
+
+        // Mostra o nome do arquivo selecionado
+        const nomeFoto = document.getElementById('nomeFotoSelecionada');
+        nomeFoto.textContent = `Foto selecionada: ${arquivo.name}`;
+        nomeFoto.classList.remove('hidden');
+      };
+      leitor.readAsDataURL(arquivo);
+    }
+
+    /**
+     * fazerUploadFoto
+     * Envia a foto selecionada para o Supabase Storage (bucket 'avatares').
+     * Retorna a URL pública da foto para salvar na tabela profiles.
+     * @param idUsuario - UUID do usuário (usado como nome do arquivo)
+     * @returns URL pública da foto ou null se não houver foto selecionada
+     */
+    async function fazerUploadFoto(idUsuario) {
+      const inputFoto = document.getElementById('inputFoto');
+      const arquivo   = inputFoto.files[0];
+
+      // Se o usuário não selecionou nenhuma foto, não faz nada
+      if (!arquivo) return null;
+
+      // Nome do arquivo usa o ID do usuário para evitar conflitos
+      const extensao    = arquivo.name.split('.').pop();
+      const nomeArquivo = `${idUsuario}.${extensao}`;
+
+      // upsert: true sobrescreve a foto anterior se já existir
+      const { error: erroUpload } = await clienteSupabase.storage
+        .from('avatares')
+        .upload(nomeArquivo, arquivo, { upsert: true });
+
+      if (erroUpload) {
+        console.error('Erro no upload da foto:', erroUpload);
+        return null;
+      }
+
+      // Retorna a URL pública da foto (o bucket precisa ser público)
+      const { data } = clienteSupabase.storage
+        .from('avatares')
+        .getPublicUrl(nomeArquivo);
+
+      return data.publicUrl;
+    }
+
+    /**
+     * preencherFormulario
+     * Recebe os dados atuais do banco e preenche os campos do formulário
+     * para que o treinador veja os valores antes de editar.
+     * @param perfil    - objeto da tabela profiles
+     * @param treinador - objeto da tabela treinadores
+     */
+    function preencherFormulario(perfil, treinador) {
+      document.getElementById('nome').value   = perfil.nome      || '';
+      document.getElementById('bio').value    = treinador.bio    || '';
+      document.getElementById('clube').value  = treinador.clube  || '';
+      document.getElementById('cidade').value = treinador.cidade || '';
+
+      // Preenche o preview de foto com a imagem atual (se houver)
+      const inicialPreview = document.getElementById('inicialPreview');
+      const imgPreview     = document.getElementById('imgPreview');
+
+      if (perfil.avatar_url) {
+        // Há foto cadastrada: exibe ela no preview
+        imgPreview.src = perfil.avatar_url;
+        imgPreview.classList.remove('hidden');
+        inicialPreview.classList.add('hidden');
+      } else {
+        // Sem foto: exibe a inicial do nome
+        inicialPreview.textContent = (perfil.nome || 'T')[0].toUpperCase();
+      }
+    }
+
+    // ── 3. FUNÇÕES PRINCIPAIS ────────────────────────────────────
+
+    /**
+     * verificarAutenticacao
+     * Verifica se há um usuário logado. Redireciona se não houver.
+     * @returns o objeto do usuário logado ou null
+     */
+    async function verificarAutenticacao() {
+      const { data: { session } } = await clienteSupabase.auth.getSession();
+      if (!session) {
+        window.location.href = 'index.html';
+        return null;
+      }
+      return session.user;
+    }
+
+    /**
+     * carregarDadosParaEdicao
+     * Busca os dados atuais do treinador logado e preenche o formulário.
+     */
+    async function carregarDadosParaEdicao() {
+      try {
+        // Busca os dados nas duas tabelas em paralelo para maior velocidade
+        const [resultadoPerfil, resultadoTreinador] = await Promise.all([
+          clienteSupabase.from('profiles').select('*').eq('id', idUsuarioAtual).single(),
+          clienteSupabase.from('treinadores').select('*').eq('id', idUsuarioAtual).single(),
+        ]);
+
+        if (resultadoPerfil.error || resultadoTreinador.error) {
+          console.error('Erro ao carregar dados:', resultadoPerfil.error || resultadoTreinador.error);
+          return;
+        }
+
+        // Preenche o formulário com os dados recebidos
+        preencherFormulario(resultadoPerfil.data, resultadoTreinador.data);
+
+        // Exibe o formulário e esconde o spinner de carregamento
+        document.getElementById('estadoCarregando').classList.add('hidden');
+        document.getElementById('formularioEdicao').classList.remove('hidden');
+
+      } catch (erro) {
+        console.error('Erro inesperado ao carregar dados:', erro);
+      }
+    }
+
+    /**
+     * salvarAlteracoes
+     * Coleta os valores do formulário e salva nas tabelas profiles e treinadores.
+     * Só funciona se o usuário estiver logado (proteção por RLS no Supabase).
+     */
+    async function salvarAlteracoes() {
+      definirEstadoBotao(true);
+
+      // Coleta todos os valores do formulário
+      const dadosAtualizados = {
+        nome:   document.getElementById('nome').value.trim(),
+        bio:    document.getElementById('bio').value.trim(),
+        clube:  document.getElementById('clube').value.trim(),
+        cidade: document.getElementById('cidade').value.trim(),
+      };
+
+      // Validação básica: nome é obrigatório
+      if (!dadosAtualizados.nome) {
+        exibirErro('O nome é obrigatório.');
+        definirEstadoBotao(false);
+        return;
+      }
+
+      try {
+        // 1. Faz o upload da foto (se uma nova foto foi selecionada)
+        //    Retorna a URL pública ou null se não houver foto nova
+        const urlNovaFoto = await fazerUploadFoto(idUsuarioAtual);
+
+        // 2. Monta o objeto de atualização do profile
+        //    Só inclui avatar_url se uma nova foto foi enviada
+        const dadosPerfil = { nome: dadosAtualizados.nome };
+        if (urlNovaFoto) {
+          dadosPerfil.avatar_url = urlNovaFoto;
+        }
+
+        // 3. Atualiza o nome (e foto, se houver) na tabela profiles
+        const { error: erroPerfil } = await clienteSupabase
+          .from('profiles')
+          .update(dadosPerfil)
+          .eq('id', idUsuarioAtual);
+
+        if (erroPerfil) {
+          exibirErro('Erro ao salvar nome. Tente novamente.');
+          definirEstadoBotao(false);
+          return;
+        }
+
+        // 4. Atualiza clube, cidade e bio na tabela treinadores
+        const { error: erroTreinador } = await clienteSupabase
+          .from('treinadores')
+          .update({
+            bio:    dadosAtualizados.bio,
+            clube:  dadosAtualizados.clube,
+            cidade: dadosAtualizados.cidade,
+          })
+          .eq('id', idUsuarioAtual);
+
+        if (erroTreinador) {
+          exibirErro('Erro ao salvar dados profissionais. Tente novamente.');
+          definirEstadoBotao(false);
+          return;
+        }
+
+        // 5. Exibe mensagem de sucesso
+        exibirSucesso('Perfil atualizado com sucesso!');
+        definirEstadoBotao(false);
+
+        // 6. Após 2 segundos, volta para o dashboard
+        setTimeout(function () {
+          window.location.href = 'treinador.html';
+        }, 2000);
+
+      } catch (erroInesperado) {
+        exibirErro('Erro de conexão. Verifique sua internet e tente novamente.');
+        definirEstadoBotao(false);
+      }
+    }
+
+    /**
+     * fazerLogout
+     * Encerra a sessão do usuário e redireciona para o login.
+     */
+    async function fazerLogout() {
+      await clienteSupabase.auth.signOut();
+      window.location.href = 'index.html';
+    }
+
+    // ── 4. INICIALIZAÇÃO ─────────────────────────────────────────
+
+    // Executa ao abrir a página: verifica sessão e carrega os dados para edição
+    (async function iniciar() {
+      const usuarioLogado = await verificarAutenticacao();
+      if (!usuarioLogado) return;
+
+      // Guarda o ID do usuário para usar nas funções de salvar
+      idUsuarioAtual = usuarioLogado.id;
+
+      await carregarDadosParaEdicao();
+    })();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HandQuiriguaçu — Entrar</title>
+
+  <!-- Supabase: banco de dados sem backend -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Tailwind: estilização sem escrever CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Inter: tipografia moderna e legível -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* Aplica a fonte Inter em todo o projeto */
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="h-screen flex bg-gray-50">
+
+  <!-- ══════════════════════════════════════════════
+       LADO ESQUERDO — identidade visual do projeto
+  ══════════════════════════════════════════════ -->
+  <div class="hidden lg:flex w-1/2 bg-blue-700 flex-col justify-between p-12 text-white">
+    <!-- Logo e nome no topo -->
+    <div class="flex items-center gap-3">
+      <!-- Ícone de handebol (SVG simples) -->
+      <svg class="w-10 h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="18" stroke="white" stroke-width="2.5"/>
+        <path d="M20 4 C20 4 10 12 10 20 C10 28 20 36 20 36" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <path d="M20 4 C20 4 30 12 30 20 C30 28 20 36 20 36" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <path d="M4 18 Q20 22 36 18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span class="text-2xl font-bold tracking-tight">HandQuiriguaçu</span>
+    </div>
+
+    <!-- Chamada central -->
+    <div>
+      <h1 class="text-4xl font-extrabold leading-tight mb-4">
+        Conectando atletas<br />e treinadores<br />de handebol.
+      </h1>
+      <p class="text-blue-200 text-lg">
+        A plataforma oficial de recrutamento do handebol de Quiririm e região.
+      </p>
+    </div>
+
+    <!-- Rodapé do lado esquerdo -->
+    <p class="text-blue-300 text-sm">© 2025 HandQuiriguaçu — Projeto TCC</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       LADO DIREITO — formulário de login
+  ══════════════════════════════════════════════ -->
+  <div class="flex-1 flex items-center justify-center p-8">
+    <div class="w-full max-w-sm">
+
+      <!-- Logo visível apenas em telas pequenas (sem o painel esquerdo) -->
+      <div class="flex items-center gap-2 mb-8 lg:hidden">
+        <svg class="w-8 h-8 text-blue-700" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="18" stroke="#0056b3" stroke-width="2.5"/>
+          <path d="M20 4 C20 4 10 12 10 20 C10 28 20 36 20 36" stroke="#0056b3" stroke-width="2" stroke-linecap="round"/>
+          <path d="M20 4 C20 4 30 12 30 20 C30 28 20 36 20 36" stroke="#0056b3" stroke-width="2" stroke-linecap="round"/>
+          <path d="M4 18 Q20 22 36 18" stroke="#0056b3" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="text-xl font-bold text-blue-700">HandQuiriguaçu</span>
+      </div>
+
+      <!-- Título do formulário -->
+      <h2 class="text-2xl font-bold text-gray-900 mb-1">Bem-vindo de volta</h2>
+      <p class="text-sm text-gray-500 mb-6">Entre com sua conta para continuar</p>
+
+      <!-- ── FORMULÁRIO DE LOGIN ── -->
+      <form id="formularioLogin" class="space-y-4">
+
+        <!-- Campo de e-mail -->
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="seu@email.com"
+            required
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          />
+        </div>
+
+        <!-- Campo de senha -->
+        <div>
+          <label for="senha" class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+          <input
+            id="senha"
+            type="password"
+            placeholder="••••••••"
+            required
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          />
+        </div>
+
+        <!-- Mensagem de erro (oculta por padrão) -->
+        <div id="mensagemErro" class="hidden bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">
+          <!-- Texto do erro será inserido via JavaScript -->
+        </div>
+
+        <!-- Botão de entrar -->
+        <button
+          type="submit"
+          id="botaoEntrar"
+          class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
+        >
+          Entrar
+        </button>
+      </form>
+
+      <!-- Link para cadastro -->
+      <p class="mt-6 text-center text-sm text-gray-500">
+        Não tem conta?
+        <a href="cadastro.html" class="text-blue-700 font-semibold hover:underline">Cadastre-se gratuitamente</a>
+      </p>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       JAVASCRIPT — lógica da página de login
+  ══════════════════════════════════════════════ -->
+  <script>
+    // ── 1. CONFIGURAÇÃO DO SUPABASE ──────────────────────────────
+    // Substitua pelos valores reais do seu projeto em supabase.com
+    // Project Settings > API > Project URL e anon public key
+    const SUPABASE_URL   = 'https://ckznrungfbkbjfcajixm.supabase.co';
+    const SUPABASE_CHAVE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrem5ydW5nZmJrYmpmY2FqaXhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MTY5MTEsImV4cCI6MjA5Nzk5MjkxMX0.1Wl-lKTn_0ZOyL1stOoyGRriP4_f45nm09FIf0bsBzc';
+
+    // Cria o cliente que faz a comunicação com o banco de dados
+    const clienteSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_CHAVE);
+
+    // ── 2. FUNÇÕES AUXILIARES ────────────────────────────────────
+
+    /**
+     * exibirErro
+     * Mostra uma mensagem de erro na tela para o usuário.
+     * @param mensagem - texto do erro a ser exibido
+     */
+    function exibirErro(mensagem) {
+      const elementoErro = document.getElementById('mensagemErro');
+      elementoErro.textContent = mensagem;
+      elementoErro.classList.remove('hidden');
+    }
+
+    /**
+     * esconderErro
+     * Oculta o bloco de mensagem de erro.
+     */
+    function esconderErro() {
+      document.getElementById('mensagemErro').classList.add('hidden');
+    }
+
+    /**
+     * definirEstadoBotao
+     * Ativa ou desativa o botão de login durante o carregamento,
+     * evitando cliques duplos enquanto a requisição está em andamento.
+     * @param carregando - true para desativar o botão, false para reativar
+     */
+    function definirEstadoBotao(carregando) {
+      const botao = document.getElementById('botaoEntrar');
+      botao.disabled = carregando;
+      botao.textContent = carregando ? 'Entrando...' : 'Entrar';
+      botao.classList.toggle('opacity-60', carregando);
+    }
+
+    // ── 3. FUNÇÕES PRINCIPAIS ────────────────────────────────────
+
+    /**
+     * fazerLogin
+     * Autentica o usuário com e-mail e senha no Supabase.
+     * Após o login, busca o tipo do usuário (atleta ou treinador)
+     * e redireciona para a página correta.
+     * @param email - e-mail do usuário
+     * @param senha - senha do usuário
+     */
+    async function fazerLogin(email, senha) {
+      esconderErro();
+      definirEstadoBotao(true);
+
+      try {
+        // 1. Chama o método de login do Supabase Auth
+        const { data: dadosAuth, error: erroAuth } = await clienteSupabase.auth.signInWithPassword({
+          email: email,
+          password: senha,
+        });
+
+        // 2. Se houver erro de autenticação, exibe mensagem e para aqui
+        if (erroAuth) {
+          exibirErro('E-mail ou senha incorretos. Tente novamente.');
+          definirEstadoBotao(false);
+          return;
+        }
+
+        // 3. Login bem-sucedido: busca o tipo do usuário na tabela profiles
+        const idUsuario = dadosAuth.user.id;
+        const { data: perfil, error: erroPerfil } = await clienteSupabase
+          .from('profiles')
+          .select('tipo')
+          .eq('id', idUsuario)
+          .single();
+
+        if (erroPerfil || !perfil) {
+          exibirErro('Não foi possível carregar seu perfil. Entre em contato com o suporte.');
+          definirEstadoBotao(false);
+          return;
+        }
+
+        // 4. Redireciona para o dashboard correto conforme o tipo do usuário
+        if (perfil.tipo === 'atleta') {
+          window.location.href = 'dashboard-atleta.html';
+        } else {
+          window.location.href = 'dashboard-treinador.html';
+        }
+
+      } catch (erroInesperado) {
+        // Captura erros de rede ou outros imprevistos
+        exibirErro('Erro de conexão. Verifique sua internet e tente novamente.');
+        definirEstadoBotao(false);
+      }
+    }
+
+    // ── 4. INICIALIZAÇÃO ─────────────────────────────────────────
+
+    // Escuta o envio do formulário e chama a função de login
+    document.getElementById('formularioLogin').addEventListener('submit', function (evento) {
+      // Impede o comportamento padrão do formulário (recarregar a página)
+      evento.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const senha = document.getElementById('senha').value;
+
+      fazerLogin(email, senha);
+    });
+
+    // Verifica se já existe uma sessão ativa ao carregar a página.
+    // Se o usuário já está logado, redireciona direto para o painel.
+    (async function verificarSessaoExistente() {
+      const { data: { session } } = await clienteSupabase.auth.getSession();
+      if (!session) return; // Nenhuma sessão — fica na tela de login
+
+      // Sessão encontrada: descobre o tipo e redireciona
+      const { data: perfil } = await clienteSupabase
+        .from('profiles')
+        .select('tipo')
+        .eq('id', session.user.id)
+        .single();
+
+      if (perfil?.tipo === 'atleta')    window.location.href = 'dashboard-atleta.html';
+      if (perfil?.tipo === 'treinador') window.location.href = 'dashboard-treinador.html';
+    })();
+  </script>
+
+</body>
+</html>
