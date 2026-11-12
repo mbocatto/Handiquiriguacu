@@ -87,6 +87,25 @@
         </div>
       </div>
 
+      <!-- ── CAMPEONATOS ── -->
+      <section class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 class="text-base font-bold text-gray-900">Campeonatos</h2>
+            <p class="text-sm text-gray-500 mt-1">Cadastre e acompanhe os campeonatos do seu time.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="abrirModalCampeonato()" class="inline-flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">
+              <span class="text-lg leading-none">+</span> Criar novo
+            </button>
+            <button type="button" onclick="abrirListaCampeonatos()" class="inline-flex items-center justify-center border border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold py-2 px-4 rounded-lg text-sm transition-colors">
+              Visualizar
+            </button>
+          </div>
+        </div>
+        <p id="resumoCampeonatos" class="text-xs text-gray-400 mt-4"></p>
+      </section>
+
       <!-- ── CONTADOR POR POSIÇÃO ── -->
       <!-- Mostra quantos atletas disponíveis existem em cada posição.
            Os dados vêm da mesma consulta que carrega a lista de atletas,
@@ -174,6 +193,91 @@
 
   </main>
 
+  <!-- Modal: criar campeonato -->
+  <div id="modalCampeonato" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="tituloModalCampeonato">
+    <div class="fixed inset-0 bg-gray-900/50" onclick="fecharModalCampeonato()"></div>
+    <div class="relative min-h-screen flex items-center justify-center p-4">
+      <div class="relative w-full max-w-lg bg-white rounded-2xl shadow-xl p-6">
+        <div class="flex items-start justify-between gap-4 mb-5">
+          <div>
+            <h2 id="tituloModalCampeonato" class="text-xl font-bold text-gray-900">Novo campeonato</h2>
+            <p class="text-sm text-gray-500 mt-1">Preencha as informações para criar o campeonato.</p>
+          </div>
+          <button type="button" onclick="fecharModalCampeonato()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none" aria-label="Fechar">&times;</button>
+        </div>
+
+        <form id="formCampeonato" onsubmit="salvarCampeonato(event)" class="space-y-4">
+          <div>
+            <label for="nomeCampeonato" class="block text-sm font-medium text-gray-700 mb-1">Nome do campeonato <span class="text-red-500">*</span></label>
+            <input id="nomeCampeonato" name="nome" required maxlength="100" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex.: Copa Regional de Handebol" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="cidadeCampeonato" class="block text-sm font-medium text-gray-700 mb-1">Cidade <span class="text-red-500">*</span></label>
+              <input id="cidadeCampeonato" name="cidade" required maxlength="80" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex.: Quiriguá" />
+            </div>
+            <div>
+              <label for="dataCampeonato" class="block text-sm font-medium text-gray-700 mb-1">Data <span class="text-red-500">*</span></label>
+              <input id="dataCampeonato" name="data" type="date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+          <div>
+            <label for="premiacaoCampeonato" class="block text-sm font-medium text-gray-700 mb-1">Premiação <span class="text-gray-400 font-normal">(opcional)</span></label>
+            <input id="premiacaoCampeonato" name="premiacao" maxlength="120" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex.: Troféu, medalhas e R$ 1.000" />
+          </div>
+          <div>
+            <label for="descricaoCampeonato" class="block text-sm font-medium text-gray-700 mb-1">Descrição detalhada <span class="text-red-500">*</span></label>
+            <textarea id="descricaoCampeonato" name="descricao" required maxlength="1000" rows="4" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Informe regulamento, categorias, local e outras orientações importantes."></textarea>
+          </div>
+          <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+            <button type="button" onclick="fecharModalCampeonato()" class="border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg text-sm transition-colors">Cancelar</button>
+            <button type="submit" class="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">Salvar campeonato</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: visualizar campeonatos -->
+  <div id="modalListaCampeonatos" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="tituloListaCampeonatos">
+    <div class="fixed inset-0 bg-gray-900/50" onclick="fecharListaCampeonatos()"></div>
+    <div class="relative min-h-screen flex items-center justify-center p-4">
+      <div class="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl p-6">
+        <div class="flex items-start justify-between gap-4 mb-5">
+          <div>
+            <h2 id="tituloListaCampeonatos" class="text-xl font-bold text-gray-900">Campeonatos criados</h2>
+            <p class="text-sm text-gray-500 mt-1">Confira os eventos cadastrados por você neste dispositivo.</p>
+          </div>
+          <button type="button" onclick="fecharListaCampeonatos()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none" aria-label="Fechar">&times;</button>
+        </div>
+        <div id="listaCampeonatos" class="space-y-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: inscrever atletas no campeonato -->
+  <div id="modalInscricoes" class="hidden fixed inset-0 z-[60] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="tituloModalInscricoes">
+    <div class="fixed inset-0 bg-gray-900/50" onclick="fecharModalInscricoes()"></div>
+    <div class="relative min-h-screen flex items-center justify-center p-4">
+      <div class="relative w-full max-w-lg bg-white rounded-2xl shadow-xl p-6">
+        <div class="flex items-start justify-between gap-4 mb-5">
+          <div>
+            <h2 id="tituloModalInscricoes" class="text-xl font-bold text-gray-900">Inscrever atletas</h2>
+            <p id="subtituloModalInscricoes" class="text-sm text-gray-500 mt-1"></p>
+          </div>
+          <button type="button" onclick="fecharModalInscricoes()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none" aria-label="Fechar">&times;</button>
+        </div>
+        <form onsubmit="salvarInscricoes(event)">
+          <div id="listaAtletasInscricao" class="max-h-80 overflow-y-auto space-y-2 pr-1"></div>
+          <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-5">
+            <button type="button" onclick="fecharModalInscricoes()" class="border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg text-sm transition-colors">Cancelar</button>
+            <button type="submit" class="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">Salvar inscrições</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- ══════════════════════════════════════════════
        JAVASCRIPT — lógica do dashboard do treinador
   ══════════════════════════════════════════════ -->
@@ -186,6 +290,171 @@
 
     // Guarda todos os atletas disponíveis para filtrar sem nova consulta ao banco
     let atletasDisponiveisCacheados = [];
+    let campeonatosCacheados = [];
+    let idTreinadorAtual = null;
+    let campeonatoSelecionadoId = null;
+
+    function atualizarResumoCampeonatos() {
+      const resumo = document.getElementById('resumoCampeonatos');
+      resumo.textContent = campeonatosCacheados.length
+        ? `${campeonatosCacheados.length} campeonato(s) cadastrado(s).`
+        : 'Nenhum campeonato cadastrado ainda.';
+    }
+
+    async function carregarCampeonatos() {
+      const { data, error } = await clienteSupabase
+        .from('campeonatos')
+        .select('id, nome, cidade, data, premiacao, descricao, campeonato_inscricoes(atleta_id)')
+        .eq('treinador_id', idTreinadorAtual)
+        .order('data', { ascending: true });
+
+      if (error) {
+        console.error('Erro ao carregar campeonatos:', error);
+        return false;
+      }
+
+      campeonatosCacheados = (data || []).map(function (campeonato) {
+        return {
+          ...campeonato,
+          inscritos: (campeonato.campeonato_inscricoes || []).map(function (inscricao) {
+            return { id: inscricao.atleta_id };
+          })
+        };
+      });
+      atualizarResumoCampeonatos();
+      return true;
+    }
+
+    function abrirModalCampeonato() {
+      document.getElementById('formCampeonato').reset();
+      document.getElementById('modalCampeonato').classList.remove('hidden');
+      document.getElementById('nomeCampeonato').focus();
+    }
+
+    function fecharModalCampeonato() {
+      document.getElementById('modalCampeonato').classList.add('hidden');
+    }
+
+    async function salvarCampeonato(evento) {
+      evento.preventDefault();
+      const formulario = new FormData(evento.target);
+      const { error } = await clienteSupabase.from('campeonatos').insert({
+        treinador_id: idTreinadorAtual,
+        nome: formulario.get('nome').trim(),
+        cidade: formulario.get('cidade').trim(),
+        data: formulario.get('data'),
+        premiacao: formulario.get('premiacao').trim(),
+        descricao: formulario.get('descricao').trim()
+      });
+
+      if (error) {
+        console.error('Erro ao criar campeonato:', error);
+        alert('Não foi possível salvar o campeonato. Confirme se o SQL foi executado no Supabase.');
+        return;
+      }
+
+      fecharModalCampeonato();
+      await carregarCampeonatos();
+      await abrirListaCampeonatos();
+    }
+
+    function formatarDataCampeonato(data) {
+      return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date(`${data}T12:00:00`));
+    }
+
+    function escaparHtml(valor) {
+      const elemento = document.createElement('div');
+      elemento.textContent = valor || '';
+      return elemento.innerHTML;
+    }
+
+    async function abrirListaCampeonatos() {
+      await carregarCampeonatos();
+      const campeonatos = campeonatosCacheados;
+      const lista = document.getElementById('listaCampeonatos');
+      lista.innerHTML = campeonatos.length ? campeonatos.map(function (campeonato) {
+        return `<article class="border border-gray-200 rounded-xl p-4">
+          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+            <div>
+              <h3 class="font-bold text-gray-900">${escaparHtml(campeonato.nome)}</h3>
+              <p class="text-sm text-blue-700 mt-1">${escaparHtml(campeonato.cidade)} · ${formatarDataCampeonato(campeonato.data)}</p>
+            </div>
+            ${campeonato.premiacao ? `<span class="text-xs font-medium bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full">${escaparHtml(campeonato.premiacao)}</span>` : ''}
+          </div>
+          <p class="text-sm text-gray-600 mt-3 whitespace-pre-line">${escaparHtml(campeonato.descricao)}</p>
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 pt-3 border-t border-gray-100">
+            <p class="text-xs text-gray-500">${(campeonato.inscritos || []).length} atleta(s) inscrito(s)</p>
+            <button type="button" onclick="abrirModalInscricoes('${campeonato.id}')" class="text-sm font-semibold text-blue-700 hover:text-blue-900">Inscrever atletas</button>
+          </div>
+        </article>`;
+      }).join('') : '<div class="text-center py-10 border border-dashed border-gray-200 rounded-xl"><p class="text-sm text-gray-400">Nenhum campeonato cadastrado ainda.</p></div>';
+      document.getElementById('modalListaCampeonatos').classList.remove('hidden');
+    }
+
+    function fecharListaCampeonatos() {
+      document.getElementById('modalListaCampeonatos').classList.add('hidden');
+    }
+
+    function abrirModalInscricoes(idCampeonato) {
+      const campeonato = campeonatosCacheados.find(function (item) { return item.id === idCampeonato; });
+      if (!campeonato) return;
+
+      campeonatoSelecionadoId = idCampeonato;
+      document.getElementById('subtituloModalInscricoes').textContent = campeonato.nome;
+      const idsInscritos = (campeonato.inscritos || []).map(function (atleta) { return String(atleta.id); });
+      const lista = document.getElementById('listaAtletasInscricao');
+
+      if (!atletasDisponiveisCacheados.length) {
+        lista.innerHTML = '<div class="text-center py-8 border border-dashed border-gray-200 rounded-xl"><p class="text-sm text-gray-400">Não há atletas disponíveis para inscrição.</p></div>';
+      } else {
+        lista.innerHTML = atletasDisponiveisCacheados.map(function (atleta) {
+          const nome = atleta.profiles?.nome || 'Atleta';
+          const posicao = atleta.posicao || 'Posição não informada';
+          const marcado = idsInscritos.includes(String(atleta.id)) ? 'checked' : '';
+          return `<label class="flex items-center gap-3 border border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-blue-50 transition-colors">
+            <input type="checkbox" name="atletasInscritos" value="${escaparHtml(String(atleta.id))}" ${marcado} class="w-4 h-4 text-blue-700 rounded focus:ring-blue-500">
+            <span class="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold text-sm flex items-center justify-center shrink-0">${escaparHtml(nome.charAt(0).toUpperCase())}</span>
+            <span><span class="block text-sm font-semibold text-gray-900">${escaparHtml(nome)}</span><span class="block text-xs text-gray-500">${escaparHtml(posicao)}</span></span>
+          </label>`;
+        }).join('');
+      }
+      document.getElementById('modalInscricoes').classList.remove('hidden');
+    }
+
+    function fecharModalInscricoes() {
+      document.getElementById('modalInscricoes').classList.add('hidden');
+      campeonatoSelecionadoId = null;
+    }
+
+    async function salvarInscricoes(evento) {
+      evento.preventDefault();
+      const idsSelecionados = new FormData(evento.target).getAll('atletasInscritos');
+      const { error: erroExcluir } = await clienteSupabase
+        .from('campeonato_inscricoes')
+        .delete()
+        .eq('campeonato_id', campeonatoSelecionadoId);
+
+      if (erroExcluir) {
+        console.error('Erro ao atualizar inscrições:', erroExcluir);
+        alert('Não foi possível atualizar as inscrições. Confirme se o SQL foi executado no Supabase.');
+        return;
+      }
+
+      if (idsSelecionados.length) {
+        const inscricoes = idsSelecionados.map(function (idAtleta) {
+          return { campeonato_id: campeonatoSelecionadoId, atleta_id: idAtleta };
+        });
+        const { error: erroInserir } = await clienteSupabase.from('campeonato_inscricoes').insert(inscricoes);
+        if (erroInserir) {
+          console.error('Erro ao salvar inscrições:', erroInserir);
+          alert('Não foi possível salvar as inscrições. Tente novamente.');
+          return;
+        }
+      }
+
+      fecharModalInscricoes();
+      await abrirListaCampeonatos();
+    }
 
     // ── 2. FUNÇÕES AUXILIARES ────────────────────────────────────
 
@@ -501,7 +770,9 @@
       const usuarioLogado = await verificarAutenticacao();
       if (!usuarioLogado) return;
 
+      idTreinadorAtual = usuarioLogado.id;
       await carregarDashboard(usuarioLogado.id);
+      await carregarCampeonatos();
     })();
   </script>
 
